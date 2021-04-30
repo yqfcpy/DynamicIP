@@ -27,8 +27,9 @@ class DynamicIp(QWidget,Ui_main):
       self.password_le.setText(self.descrypt(self.userinfo['password']))
       self.update_time_le.setText(self.userinfo['update_time'])
       self.is_connected(not self.userinfo['editable'])
-
-    self.get('https://jsonip.com/')
+    #   https://ipv4.jsonip.com https://ipv6.jsonip.com https://jsonip.com
+    self.ip_url = 'https://jsonip.com'
+    self.get(self.ip_url)
 
 
   def start_update_ip(self):

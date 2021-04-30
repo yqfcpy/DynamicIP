@@ -248,7 +248,7 @@ class Ui_main(object):
         self.domain_le.setPlaceholderText(_translate("main", "example.ddns.com"))
         self.minute_lb.setText(_translate("main", "Min(5-1092)"))
         self.domain_lb.setText(_translate("main", "Domain Name"))
-        self.update_time_lb.setText(_translate("main", "Update Inteval"))
+        self.update_time_lb.setText(_translate("main", "Update Interval"))
         self.password_lb.setText(_translate("main", "Password"))
         self.window_startup_cb.setText(_translate("main", "Startup in Windows"))
         self.ok_btn.setText(_translate("main", "Enable"))
