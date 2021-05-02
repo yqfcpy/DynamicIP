@@ -254,6 +254,6 @@ class Ui_main(object):
         self.ok_btn.setText(_translate("main", "Enable"))
         self.edit_btn.setText(_translate("main", "Edit"))
         self.auther_lb.setText(_translate("main", "Auther:Oscar"))
-        self.web_lb.setText(_translate("main", "https://www.yqfsoft.com"))
+        self.web_lb.setText(_translate("main", "<a href=\"https://www.yqfsoft.com/\">https://www.yqfsoft.com</a>"))
         self.version_lb.setText(_translate("main", "Version:1.0.0"))
 import image_rc

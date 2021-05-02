@@ -3,7 +3,8 @@ __author__ = 'Oscar Yang Liu'
 import json
 
 from PyQt5.QtCore import QUrlQuery, QUrl, QTimer, QSettings
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtGui import QIntValidator, QIcon
+from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox, QSystemTrayIcon, QMenu, QAction, qApp
 from PyQt5 import QtNetwork
 from resource.UI.main import Ui_main
 from pyDes import des, CBC, PAD_PKCS5
@@ -20,6 +21,8 @@ class DynamicIp(QWidget,Ui_main):
     # 先取保存的变量
     self.settings = QSettings("yqfsoft", "DDNS")
     self.userinfo = self.settings.value('userinfo')
+    # 设置文本可以跳转页面
+    self.web_lb.setOpenExternalLinks(True)
 
     if self.userinfo != None:
       self.domain_le.setText(self.userinfo['domain'])
@@ -27,16 +30,29 @@ class DynamicIp(QWidget,Ui_main):
       self.password_le.setText(self.descrypt(self.userinfo['password']))
       self.update_time_le.setText(self.userinfo['update_time'])
       self.is_connected(not self.userinfo['editable'])
-    #   https://ipv4.jsonip.com https://ipv6.jsonip.com https://jsonip.com
-    self.ip_url = 'https://jsonip.com'
+
+    # https://ipv4.jsonip.com https://ipv6.jsonip.com https://jsonip.com
+    self.ip_url = 'https://ipv4.jsonip.com'
     self.get(self.ip_url)
+    self.request_ip_time = QTimer()
+
+    # 验证时间的
+    update_time_validator = QIntValidator(5,1092)
+    self.update_time_le.setValidator(update_time_validator)
+
+    # 信号
+    self.request_ip_time.timeout.connect(lambda:print('时间超时'))
+
 
 
   def start_update_ip(self):
-    # self.timer.timeout.connect(lambda: self.get('https://jsonip.com/'))
+    if self.ip_lb.text() == '':
+      return None
     domain = self.domain_le.text()
     username = self.username_le.text()
     password = self.password_le.text()
+    if int(self.update_time_le.text())<5 or int(self.update_time_le.text())>1092:
+      self.update_time_le.setText('5')
     update_time = self.update_time_le.text()
     if domain !='' and username !='' and password !='' and update_time !='':
       # 密码加密保存到注册表
@@ -45,6 +61,12 @@ class DynamicIp(QWidget,Ui_main):
       self.is_connected(not editable)
       self.userinfo = {'domain':domain,'username':username,'password':encrypt_password,'update_time':update_time,'editable':editable}
       self.settings.setValue('userinfo',self.userinfo)
+    # 发送更新请求
+    self.update_ip(username,password,domain,self.ip_lb)
+
+
+
+
 
 
 
@@ -66,9 +88,14 @@ class DynamicIp(QWidget,Ui_main):
     print('toogle',toggle)
 
   # get异步请求
-  def get(self, url: str):
+  def get(self, url: str, param: dict = None):
     # 创建一个请求
     path = QUrl(url)
+    if param != None:
+      query = QUrlQuery()
+      for item in param.items():
+        query.addQueryItem(item[0], item[1])
+      path.setQuery(query.query())
     req = QtNetwork.QNetworkRequest(path)
     self.nam = QtNetwork.QNetworkAccessManager()
     self.nam.finished.connect(self.handleResponse)
@@ -83,9 +110,22 @@ class DynamicIp(QWidget,Ui_main):
       bytes_to_json = json.loads(str(bytes_string,encoding='utf8'))
       self.ip_lb.setText(bytes_to_json['ip'])
       print(bytes_to_json['ip'])
+      # DynDns Api
+      # self.update_ip_url = 'https://username:password@members.dyndns.org/v3/update'
+      # self.get(self.update_ip_url,{'hostname':'域名','myip':'当前的ip地址'})
+      self.update_ip(bytes_to_json['ip'])
+      if self.ok_btn.isEnabled() == False:
+        self.start_update_ip()
+
+
+
     else:
       self.ip_lb.setText('')
 
+  # 更新ip
+  def update_ip(self, username:str, password:str, domain:str, new_ip:str):
+    url = 'https://{}:{}@members.dyndns.org/v3/update'.format(username, password)
+    self.get(url, {'hostname': domain, 'myip': new_ip})
 
   # 加密
   def encrypt(self,s):
@@ -115,6 +155,29 @@ class DynamicIp(QWidget,Ui_main):
     des_obj = des(secret_key, CBC, iv, pad=None, padmode=PAD_PKCS5)
     decrypt_str = des_obj.decrypt(binascii.a2b_hex(s), padmode=PAD_PKCS5)
     return str(decrypt_str,encoding='utf8')
+
+  # 退出程序保存
+  def closeEvent(self, event):
+    reply = QMessageBox.question(self, 'Message', "Are you sure to quit?",
+                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+    # 判断返回值，如果点击的是Yes按钮，我们就关闭组件和应用，否则就忽略关闭事件
+    if reply == QMessageBox.Yes:
+      # 退出保存变量
+      domain = self.domain_le.text()
+      username = self.username_le.text()
+      password = self.password_le.text()
+      if int(self.update_time_le.text()) < 5 or int(self.update_time_le.text()) > 1092:
+        self.update_time_le.setText('5')
+      update_time = self.update_time_le.text()
+      encrypt_password = self.encrypt(password)
+      self.userinfo = {'domain': domain, 'username': username, 'password': encrypt_password,
+                       'update_time': update_time, 'editable': self.ok_btn.isEnabled()}
+      self.settings.setValue('userinfo', self.userinfo)
+
+      event.accept()
+    else:
+      event.ignore()
+
 
 if __name__ == '__main__':
   import sys

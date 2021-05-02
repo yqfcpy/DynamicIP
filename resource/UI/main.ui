@@ -516,7 +516,7 @@
         </font>
        </property>
        <property name="text">
-        <string>https://www.yqfsoft.com</string>
+        <string>&lt;a href=&quot;https://www.yqfsoft.com/&quot;&gt;https://www.yqfsoft.com&lt;/a&gt;</string>
        </property>
       </widget>
      </item>
