@@ -36,6 +36,7 @@ class DynamicIp(QWidget,Ui_main):
     self.get(self.ip_url)
     self.request_ip_time = QTimer()
 
+
     # 验证时间的
     update_time_validator = QIntValidator(5,1092)
     self.update_time_le.setValidator(update_time_validator)
@@ -51,23 +52,23 @@ class DynamicIp(QWidget,Ui_main):
     domain = self.domain_le.text()
     username = self.username_le.text()
     password = self.password_le.text()
-    if int(self.update_time_le.text())<5 or int(self.update_time_le.text())>1092:
+    if domain == '' or username == '' or password == '':
+      return None
+    if self.update_time_le.text() == '' or int(self.update_time_le.text())<5 or int(self.update_time_le.text())>1092:
       self.update_time_le.setText('5')
     update_time = self.update_time_le.text()
     if domain !='' and username !='' and password !='' and update_time !='':
       # 密码加密保存到注册表
       encrypt_password = self.encrypt(password)
-      editable = False
-      self.is_connected(not editable)
-      self.userinfo = {'domain':domain,'username':username,'password':encrypt_password,'update_time':update_time,'editable':editable}
-      self.settings.setValue('userinfo',self.userinfo)
+      self.is_connected(True)
+      self.userinfo = {'domain':domain, 'username':username, 'password':encrypt_password, 'update_time':update_time, 'editable':self.ok_btn.isEnabled()}
+      self.settings.setValue('userinfo', self.userinfo)
     # 发送更新请求
-    self.update_ip(username,password,domain,self.ip_lb)
-
-
-
-
-
+    try:
+      self.update_ip(username, password, domain, self.ip_lb)
+    except:
+      self.error_info_lb.setText("The user info maybe incorrect!")
+      self.is_connected(False)
 
 
   def edit_info(self):
@@ -110,19 +111,19 @@ class DynamicIp(QWidget,Ui_main):
       bytes_to_json = json.loads(str(bytes_string,encoding='utf8'))
       self.ip_lb.setText(bytes_to_json['ip'])
       print(bytes_to_json['ip'])
-      # DynDns Api
-      # self.update_ip_url = 'https://username:password@members.dyndns.org/v3/update'
-      # self.get(self.update_ip_url,{'hostname':'域名','myip':'当前的ip地址'})
-      self.update_ip(bytes_to_json['ip'])
-      if self.ok_btn.isEnabled() == False:
-        self.start_update_ip()
-
-
+      # 如果进来的时候已经是enable状态那么直接提交一个更新ip
+      if self.userinfo['editable'] == False:
+        self.update_ip(self.username, self.password, self.domain, bytes_to_json['ip'])
+        self.request_ip_time.start(int(self.update_time_le) * 60 * 1000)
 
     else:
       self.ip_lb.setText('')
 
   # 更新ip
+  # DynDns Api
+  # self.update_ip_url = 'https://username:password@members.dyndns.org/v3/update'
+  # self.get(self.update_ip_url,{'hostname':'域名','myip':'当前的ip地址'})
+  # self.update_ip(bytes_to_json['ip'])
   def update_ip(self, username:str, password:str, domain:str, new_ip:str):
     url = 'https://{}:{}@members.dyndns.org/v3/update'.format(username, password)
     self.get(url, {'hostname': domain, 'myip': new_ip})
@@ -166,7 +167,7 @@ class DynamicIp(QWidget,Ui_main):
       domain = self.domain_le.text()
       username = self.username_le.text()
       password = self.password_le.text()
-      if int(self.update_time_le.text()) < 5 or int(self.update_time_le.text()) > 1092:
+      if self.update_time_le.text() == '' or int(self.update_time_le.text())<5 or int(self.update_time_le.text())>1092:
         self.update_time_le.setText('5')
       update_time = self.update_time_le.text()
       encrypt_password = self.encrypt(password)
