@@ -1,7 +1,6 @@
 __author__ = 'Oscar Yang Liu'
 
-import json
-
+import json, os, binascii
 from PyQt5.QtCore import QUrlQuery, QUrl, QTimer, QSettings, QEvent
 from PyQt5.QtGui import QIntValidator, QIcon
 from PyQt5.QtNetwork import QLocalSocket, QLocalServer
@@ -9,7 +8,6 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox, QSystemTrayIcon,
 from PyQt5 import QtNetwork
 from resource.UI.main import Ui_main
 from pyDes import des, CBC, PAD_PKCS5
-import binascii
 
 
 class DynamicIp(QWidget,Ui_main):
@@ -86,7 +84,7 @@ class DynamicIp(QWidget,Ui_main):
     self.ok_btn.setDisabled(state)
 
   def is_start_in_window(self, toggle):
-    print('toogle', toggle)
+    print('toogle', toggle, os.getcwd())
     if toggle:
       # 执行开机自动启动方法
       pass
