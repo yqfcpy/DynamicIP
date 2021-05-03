@@ -1,1 +1,1 @@
-"# DynamicIP" 
+"# Dyndns cliente" 
