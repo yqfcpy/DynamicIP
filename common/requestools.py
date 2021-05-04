@@ -51,6 +51,6 @@ class AsyncRequest(QObject):
       result = {'result': bytes_string_to_json}
       self.result = result
     else:
-      errorResult = {'success': False, 'code': 0, 'message': 'Local Exception'}
+      errorResult = {'result': '{"success": "False"}'}
       self.result = errorResult
     self.getResult.emit(self.result)

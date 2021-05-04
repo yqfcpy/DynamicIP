@@ -1,6 +1,6 @@
 __author__ = 'Oscar Yang Liu'
 
-import json
+import json, time
 
 from PyQt5.QtCore import QTimer, QSettings, QEvent
 from PyQt5.QtGui import QIntValidator, QIcon
@@ -31,14 +31,14 @@ class DynamicIp(QWidget,Ui_main):
     # 创建托盘
     self.create_tuopan()
     self.ip_request = AsyncRequest()
-    self.update_ip_request = AsyncRequest()
+    # self.update_ip_request = AsyncRequest()
     # 获取ip地址
     # https://ipv4.jsonip.com https://ipv6.jsonip.com https://jsonip.com
     self.ip_url = 'https://ipv4.jsonip.com'
     self.ip_request.get(self.ip_url)
-    self.update_ip('jiezhou', 'ji1ezhou', 'moda2013.dnsdojo.com', '1.1.1.1')
+
     # dyndns更新
-    #self.request_ip_time = QTimer()
+    self.request_ip_time = QTimer()
 
     # 验证时间的
     update_time_validator = QIntValidator(5, 1092)
@@ -48,12 +48,12 @@ class DynamicIp(QWidget,Ui_main):
     # 获取ip地址的信号
     self.ip_request.getResult.connect(self.get_ip_result)
     # dyndns发送更新ip地址
-    self.update_ip_request.getResult.connect(self.get_update_ip_result)
-    #self.request_ip_time.timeout.connect(lambda: print('时间超时'))
+    # self.update_ip_request.getResult.connect(self.get_update_ip_result)
+    self.request_ip_time.timeout.connect(lambda: self.ip_request.get(self.ip_url))
     # 监控托盘的双击显示和隐藏
     self.tuopan.activated[self.tuopan.ActivationReason].connect(self.iconActivated)
 
-  # TODO
+  # 开启同步绑定ip服务
   def start_update_ip(self):
     if self.ip_lb.text() == '':
       return None
@@ -73,8 +73,7 @@ class DynamicIp(QWidget,Ui_main):
                        'update_time': update_time, 'editable': self.ok_btn.isEnabled()}
       self.settings.setValue('userinfo', self.userinfo)
     # 发送更新请求
-
-
+    self.ip_request.get(self.ip_url)
 
   def edit_info(self):
     self.is_connected(False)
@@ -141,15 +140,25 @@ class DynamicIp(QWidget,Ui_main):
     result = json.loads(dic['result'])
     if 'ip' in result:
       self.ip_lb.setText(result['ip'])
+      if not self.ok_btn.isEnabled():
+        username = self.username_le.text()
+        password = self.password_le.text()
+        domain = self.domain_le.text()
+        try:
+          self.update_ip(username, password, domain, result['ip'])
+          self.error_info_lb.setText('')
+        except:
+          self.error_info_lb.setText('Update ip failed')
     else:
       self.ip_lb.setText('')
+    self.request_ip_time.start(int(self.update_time_le.text()) * 60 * 1000)
 
   # 向dyndns发送api后的返回值
-  def get_update_ip_result(self, dic):
-    # 返回结果如果有ip地址说明成功 如果返回的字符串中‘.’出现3次我就认为更新成功 ip地址会出现3个‘.’
-    print(dic['result'])
-    if dic['result'].count('.') == 3:
-      print('修改地址成功')
+  # def get_update_ip_result(self, dic):
+  #   # 返回结果如果有ip地址说明成功 如果返回的字符串中‘.’出现3次我就认为更新成功 ip地址会出现3个‘.’
+  #   print(dic['result'])
+  #   if dic['result'].count('.') == 3:
+  #     print('修改地址成功')
 
   # 托盘中恢复显示的方法
   def restore_display(self):
@@ -164,6 +173,12 @@ class DynamicIp(QWidget,Ui_main):
   def update_ip(self, username: str, password: str, domain: str, new_ip: str):
     url = 'https://{}:{}@members.dyndns.org/v3/update'.format(username, password)
     self.update_ip_request.get(url, {'hostname': domain, 'myip': new_ip})
+
+  # 托盘图标事件
+  def iconActivated(self, reason):
+    if reason == self.tuopan.Trigger:
+      self.showNormal()
+      self.activateWindow()
 
   # 最小化 事件
   def event(self, event):
@@ -194,12 +209,6 @@ class DynamicIp(QWidget,Ui_main):
       event.accept()
     else:
       event.ignore()
-
-  # 托盘图标事件
-  def iconActivated(self, reason):
-    if reason == self.tuopan.Trigger:
-      self.showNormal()
-      self.activateWindow()
 
 if __name__ == '__main__':
   # 只允许一个程序启动
