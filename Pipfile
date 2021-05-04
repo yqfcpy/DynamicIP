@@ -9,7 +9,6 @@ pyqt5-tools = "*"
 pyqt5-stubs = "==5.15.2.0"
 crypto = "*"
 pydes = "*"
-pyinstaller = "*"
 
 [dev-packages]
 
