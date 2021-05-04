@@ -1,6 +1,4 @@
-__author__ = 'Administrator'
-
-import json
+__author__ = 'Oscar Yang Liu'
 
 from PyQt5 import QtNetwork
 from PyQt5.QtCore import QObject, pyqtSignal, QUrl, QUrlQuery, QJsonDocument

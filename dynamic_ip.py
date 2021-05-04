@@ -1,6 +1,6 @@
 __author__ = 'Oscar Yang Liu'
 
-import json, time
+import json
 
 from PyQt5.QtCore import QTimer, QSettings, QEvent
 from PyQt5.QtGui import QIntValidator, QIcon
