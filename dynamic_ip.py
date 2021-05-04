@@ -30,13 +30,13 @@ class DynamicIp(QWidget,Ui_main):
     self.load_userinfo()
     # 创建托盘
     self.create_tuopan()
+
     self.ip_request = AsyncRequest()
     # self.update_ip_request = AsyncRequest()
     # 获取ip地址
     # https://ipv4.jsonip.com https://ipv6.jsonip.com https://jsonip.com
     self.ip_url = 'https://ipv4.jsonip.com'
     self.ip_request.get(self.ip_url)
-
     # dyndns更新
     self.request_ip_time = QTimer()
 
@@ -107,7 +107,6 @@ class DynamicIp(QWidget,Ui_main):
         self.autorun_setting.value.setValue('DynamicIp', sys.argv[0])
       if not self.ok_btn.isEnabled():
         self.hide()
-
 
   # 读取保存的userinfo
   def load_userinfo(self):
@@ -226,7 +225,10 @@ if __name__ == '__main__':
       localServer.listen(serverName)
       # 处理其他事务
       window = DynamicIp()
-      window.show()
+      if window.ok_btn.isEnabled():
+        window.show()
+      else:
+        window.hide()
       sys.exit(app.exec_())
   except:
     pass
